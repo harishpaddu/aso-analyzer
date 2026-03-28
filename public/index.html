@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASO Analyzer — Play Store Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #111118;
+      --bg3: #1a1a24;
+      --bg4: #222230;
+      --surface: #16161f;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.12);
+      --border3: rgba(255,255,255,0.2);
+      --t1: #f0f0f8;
+      --t2: #8888aa;
+      --t3: #55556a;
+      --accent: #5DCAA5;
+      --accent-dim: rgba(93,202,165,0.15);
+      --accent-text: #1D9E75;
+      --yellow: #EF9F27;
+      --yellow-dim: rgba(239,159,39,0.15);
+      --red: #E24B4A;
+      --red-dim: rgba(226,75,74,0.12);
+      --blue: #6ea8e8;
+      --blue-dim: rgba(110,168,232,0.12);
+      --ff: 'DM Sans', sans-serif;
+      --fs: 'Instrument Serif', serif;
+      --fm: 'DM Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--ff);
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    .nav-logo {
+      font-family: var(--fm); font-size: 13px; font-weight: 500;
+      color: var(--t1); letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;
+    }
+    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+    .nav-badge {
+      font-family: var(--fm); font-size: 10px; font-weight: 500;
+      padding: 2px 8px; border-radius: 20px;
+      background: var(--accent-dim); color: var(--accent); letter-spacing: 0.5px;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 5rem 2rem 3rem;
+      max-width: 680px; margin: 0 auto; text-align: center;
+    }
+    .hero-kicker {
+      font-family: var(--fm); font-size: 11px; color: var(--accent);
+      letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 1.5rem;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .hero-kicker::before, .hero-kicker::after { content: ''; flex: 1; max-width: 40px; height: 0.5px; background: var(--accent-dim); }
+    .hero h1 {
+      font-family: var(--fs); font-size: clamp(36px,6vw,56px);
+      font-weight: 400; line-height: 1.1; letter-spacing: -0.5px;
+      margin-bottom: 1rem; color: var(--t1);
+    }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero p {
+      font-size: 16px; color: var(--t2); line-height: 1.7; max-width: 480px; margin: 0 auto;
+    }
+
+    /* ─── MAIN CONTAINER ─── */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 1.5rem 6rem; }
+
+    /* ─── INPUT FORM ─── */
+    .form-section { margin-bottom: 1.5rem; }
+
+    .field-group {
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .field-group-label {
+      font-family: var(--fm); font-size: 10px; font-weight: 500;
+      color: var(--t3); text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 1.25rem;
+    }
+
+    .url-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .url-row:last-child { margin-bottom: 0; }
+
+    .url-tag {
+      font-family: var(--fm); font-size: 10px; font-weight: 500;
+      padding: 3px 10px; border-radius: 20px; flex-shrink: 0;
+      letter-spacing: 0.3px;
+    }
+    .tag-you { background: rgba(93,202,165,0.2); color: var(--accent); border: 0.5px solid rgba(93,202,165,0.3); }
+    .tag-c1 { background: rgba(239,159,39,0.15); color: var(--yellow); border: 0.5px solid rgba(239,159,39,0.3); }
+    .tag-c2 { background: rgba(226,75,74,0.12); color: #f07a79; border: 0.5px solid rgba(226,75,74,0.3); }
+    .tag-c3 { background: rgba(110,168,232,0.12); color: var(--blue); border: 0.5px solid rgba(110,168,232,0.3); }
+    .tag-c4 { background: rgba(176,139,250,0.12); color: #b08bfa; border: 0.5px solid rgba(176,139,250,0.3); }
+
+    input[type=text] {
+      flex: 1; height: 40px; padding: 0 14px;
+      font-size: 13px; font-family: var(--fm);
+      background: var(--bg3); border: 0.5px solid var(--border2);
+      border-radius: 8px; color: var(--t1); outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    input[type=text]:focus { border-color: var(--accent); background: var(--bg4); }
+    input[type=text]::placeholder { color: var(--t3); }
+
+    .btn-analyze {
+      width: 100%; padding: 15px; font-size: 15px; font-weight: 500;
+      font-family: var(--ff); background: var(--accent); color: #0a1a14;
+      border: none; border-radius: 12px; cursor: pointer;
+      transition: all 0.2s; letter-spacing: -0.2px;
+      margin-top: 0.5rem;
+    }
+    .btn-analyze:hover { background: #7dd8ba; transform: translateY(-1px); }
+    .btn-analyze:active { transform: translateY(0); }
+    .btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ─── LOADING ─── */
+    #pageLoading {
+      display: none; text-align: center; padding: 5rem 2rem;
+    }
+    .loader-ring {
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 2px solid var(--border2); border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite; margin: 0 auto 2rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-steps { list-style: none; max-width: 280px; margin: 0 auto; }
+    .loader-steps li {
+      font-size: 13px; color: var(--t3); padding: 5px 0;
+      font-family: var(--fm); transition: color 0.3s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .loader-steps li.active { color: var(--accent); }
+    .loader-steps li.done { color: var(--t2); }
+    .loader-steps li::before { content: '○'; font-size: 10px; }
+    .loader-steps li.done::before { content: '●'; color: var(--accent); }
+    .loader-steps li.active::before { content: '◉'; color: var(--accent); }
+
+    /* ─── RESULTS ─── */
+    #pageResults { display: none; }
+
+    .results-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2.5rem; padding-bottom: 1.5rem;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .results-title { font-family: var(--fs); font-size: 28px; font-weight: 400; }
+    .results-title span { color: var(--accent); font-style: italic; }
+    .btn-reset {
+      font-family: var(--fm); font-size: 12px; padding: 8px 16px;
+      background: transparent; color: var(--t2); border: 0.5px solid var(--border2);
+      border-radius: 8px; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-reset:hover { color: var(--t1); border-color: var(--border3); }
+
+    /* ─── SECTION HEADERS ─── */
+    .sec-head {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 1.25rem; margin-top: 2.5rem;
+    }
+    .sec-num {
+      font-family: var(--fm); font-size: 10px; color: var(--t3);
+      width: 24px; height: 24px; border-radius: 50%; border: 0.5px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sec-title { font-size: 13px; font-weight: 500; color: var(--t2); text-transform: uppercase; letter-spacing: 0.8px; }
+    .sec-head::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+
+    /* ─── APP GRID ─── */
+    .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+    .app-card {
+      background: var(--surface); border: 0.5px solid var(--border2);
+      border-radius: 14px; padding: 16px;
+      transition: border-color 0.2s;
+    }
+    .app-card.yours { border-color: rgba(93,202,165,0.4); background: rgba(93,202,165,0.04); }
+    .app-card:hover { border-color: var(--border3); }
+    .app-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .app-name { font-size: 13px; font-weight: 500; margin: 6px 0 2px; line-height: 1.3; }
+    .app-pkg { font-size: 10px; color: var(--t3); font-family: var(--fm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .app-rating-big { font-size: 28px; font-weight: 300; letter-spacing: -1px; margin: 10px 0 2px; }
+    .app-rating-sub { font-size: 11px; color: var(--t3); font-family: var(--fm); }
+    .aso-score-row { margin-top: 12px; }
+    .aso-score-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--t3); margin-bottom: 4px; font-family: var(--fm); }
+    .aso-bar { height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+    .aso-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .chip { font-size: 10px; padding: 2px 7px; border-radius: 20px; background: var(--bg3); color: var(--t3); border: 0.5px solid var(--border); font-family: var(--fm); }
+
+    /* ─── TABS ─── */
+    .tabs-wrap {
+      display: flex; gap: 0; border: 0.5px solid var(--border2);
+      border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      flex: 1; padding: 10px; font-size: 12px; font-weight: 500;
+      font-family: var(--ff); color: var(--t3); background: var(--bg2);
+      border: none; cursor: pointer; border-right: 0.5px solid var(--border);
+      transition: all 0.15s;
+    }
+    .tab-btn:last-child { border-right: none; }
+    .tab-btn.active { background: var(--surface); color: var(--t1); }
+    .tab-btn:hover:not(.active) { color: var(--t2); }
+
+    /* ─── KEYWORD TABLE ─── */
+    .table-wrap { overflow-x: auto; border-radius: 10px; border: 0.5px solid var(--border2); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 600px; }
+    th {
+      text-align: left; padding: 10px 12px; background: var(--bg2);
+      color: var(--t3); font-weight: 500; font-family: var(--fm); font-size: 10px;
+      border-bottom: 0.5px solid var(--border2); letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); color: var(--t2); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .kw-name { font-weight: 500; color: var(--t1); }
+    .vol-high { color: var(--red); font-weight: 500; font-family: var(--fm); font-size: 11px; }
+    .vol-med { color: var(--yellow); font-weight: 500; font-family: var(--fm); font-size: 11px; }
+    .vol-low { color: var(--t3); font-weight: 500; font-family: var(--fm); font-size: 11px; }
+    .tick-yes { color: var(--accent); font-size: 14px; }
+    .tick-no { color: var(--t3); font-size: 14px; }
+    .opp-text { max-width: 200px; font-size: 11px; line-height: 1.5; color: var(--t3); }
+
+    /* ─── TITLE COMPARISON ─── */
+    .title-comp-card {
+      background: var(--surface); border: 0.5px solid var(--border2);
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 10px;
+    }
+    .meta-row { display: flex; gap: 6px; margin-bottom: 10px; align-items: center; }
+    .meta-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+    .meta-table td { padding: 6px 0; border-bottom: 0.5px solid var(--border); }
+    .meta-table td:first-child { color: var(--t3); font-weight: 500; width: 28%; font-family: var(--fm); font-size: 11px; }
+    .meta-table td:last-child { color: var(--t1); }
+    .meta-table tr:last-child td { border-bottom: none; }
+
+    /* ─── SCORE COMPARISON ─── */
+    .score-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+    .score-card { background: var(--surface); border: 0.5px solid var(--border2); border-radius: 12px; padding: 14px; }
+    .score-card-label { font-size: 11px; font-weight: 500; color: var(--t2); margin-bottom: 12px; }
+    .score-item { margin-bottom: 8px; }
+    .score-item:last-child { margin-bottom: 0; }
+    .score-item-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+    .score-item-bar { height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+    .score-item-fill { height: 100%; border-radius: 2px; }
+
+    /* ─── INSIGHTS ─── */
+    .insights-grid { display: flex; flex-direction: column; gap: 8px; }
+    .insight-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 14px; border-radius: 10px;
+      background: var(--surface); border: 0.5px solid var(--border);
+      font-size: 13px; line-height: 1.6;
+    }
+    .ins-icon { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+    .ins-gap .ins-icon { background: var(--red-dim); color: var(--red); }
+    .ins-win .ins-icon { background: var(--accent-dim); color: var(--accent); }
+    .ins-opportunity .ins-icon { background: var(--yellow-dim); color: var(--yellow); }
+    .ins-gap { border-left: 2px solid var(--red); }
+    .ins-win { border-left: 2px solid var(--accent); }
+    .ins-opportunity { border-left: 2px solid var(--yellow); }
+
+    /* ─── EXPERIMENTS ─── */
+    .exp-grid { display: flex; flex-direction: column; gap: 10px; }
+    .exp-card {
+      background: var(--surface); border: 0.5px solid var(--border2);
+      border-radius: 14px; padding: 18px 20px;
+    }
+    .exp-card.pri-high { border-left: 3px solid var(--red); }
+    .exp-card.pri-med { border-left: 3px solid var(--yellow); }
+    .exp-card.pri-low { border-left: 3px solid var(--accent); }
+    .exp-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .pri-badge {
+      font-family: var(--fm); font-size: 10px; font-weight: 500;
+      padding: 2px 9px; border-radius: 20px; letter-spacing: 0.3px;
+    }
+    .pri-high-badge { background: var(--red-dim); color: var(--red); }
+    .pri-med-badge { background: var(--yellow-dim); color: var(--yellow); }
+    .pri-low-badge { background: var(--accent-dim); color: var(--accent); }
+    .elem-badge {
+      font-family: var(--fm); font-size: 10px; padding: 2px 9px;
+      border-radius: 20px; background: var(--bg3); color: var(--t3); border: 0.5px solid var(--border2);
+    }
+    .lift-badge {
+      margin-left: auto; font-family: var(--fm); font-size: 10px;
+      color: var(--accent); background: var(--accent-dim); padding: 2px 9px; border-radius: 20px;
+    }
+    .exp-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .exp-desc { font-size: 13px; color: var(--t2); line-height: 1.6; margin-bottom: 8px; }
+    .exp-hyp { font-family: var(--fm); font-size: 11px; color: var(--t3); line-height: 1.5; padding: 8px 12px; background: var(--bg3); border-radius: 6px; border-left: 2px solid var(--border2); }
+
+    /* ─── ERROR ─── */
+    .error-card {
+      background: var(--red-dim); border: 0.5px solid var(--red);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 1rem;
+      font-size: 13px; color: #f07a79;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      text-align: center; padding: 3rem 2rem; border-top: 0.5px solid var(--border);
+      color: var(--t3); font-size: 12px; font-family: var(--fm);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* ─── ANIMATIONS ─── */
+    .fade-in { animation: fadeUp 0.4s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in:nth-child(2) { animation-delay: 0.06s; }
+    .fade-in:nth-child(3) { animation-delay: 0.12s; }
+    .fade-in:nth-child(4) { animation-delay: 0.18s; }
+    .fade-in:nth-child(5) { animation-delay: 0.24s; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 3rem 1.5rem 2rem; }
+      .hero h1 { font-size: 32px; }
+      nav { padding: 0 1rem; }
+      .container { padding: 0 1rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <span class="nav-logo-dot"></span>
+    ASO Analyzer
+  </div>
+  <span class="nav-badge">PLAY STORE</span>
+</nav>
+
+<div class="hero">
+  <div class="hero-kicker">App Store Optimization</div>
+  <h1>Know where you <em>rank</em>,<br>know what to fix.</h1>
+  <p>Paste your Play Store URL and up to 4 competitors. Get keyword gaps, metadata scores, and a prioritized list of A/B experiments.</p>
+</div>
+
+<div class="container">
+
+  <!-- INPUT -->
+  <div id="pageInput">
+    <div id="errorBox" class="error-card" style="display:none;"></div>
+
+    <div class="field-group form-section">
+      <div class="field-group-label">Your app</div>
+      <div class="url-row">
+        <span class="url-tag tag-you">YOU</span>
+        <input type="text" id="url0" placeholder="https://play.google.com/store/apps/details?id=com.yourapp" />
+      </div>
+    </div>
+
+    <div class="field-group form-section">
+      <div class="field-group-label">Competitors (1 to 4)</div>
+      <div class="url-row">
+        <span class="url-tag tag-c1">C1</span>
+        <input type="text" id="url1" placeholder="Competitor 1 Play Store URL" />
+      </div>
+      <div class="url-row">
+        <span class="url-tag tag-c2">C2</span>
+        <input type="text" id="url2" placeholder="Competitor 2 (optional)" />
+      </div>
+      <div class="url-row">
+        <span class="url-tag tag-c3">C3</span>
+        <input type="text" id="url3" placeholder="Competitor 3 (optional)" />
+      </div>
+      <div class="url-row">
+        <span class="url-tag tag-c4">C4</span>
+        <input type="text" id="url4" placeholder="Competitor 4 (optional)" />
+      </div>
+    </div>
+
+    <button class="btn-analyze" id="analyzeBtn" onclick="startAnalysis()">
+      Run ASO Analysis →
+    </button>
+  </div>
+
+  <!-- LOADING -->
+  <div id="pageLoading">
+    <div class="loader-ring"></div>
+    <ul class="loader-steps" id="loaderSteps">
+      <li id="ls0">Fetching Play Store metadata</li>
+      <li id="ls1">Extracting keywords from titles & descriptions</li>
+      <li id="ls2">Running competitor keyword gap analysis</li>
+      <li id="ls3">Scoring metadata quality across all apps</li>
+      <li id="ls4">Generating experiment recommendations</li>
+    </ul>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="pageResults">
+    <div class="results-header">
+      <div class="results-title">Analysis <span>complete</span></div>
+      <button class="btn-reset" onclick="resetTool()">← New analysis</button>
+    </div>
+
+    <div>
+      <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">App overview</span></div>
+      <div class="app-grid fade-in" id="appGrid"></div>
+    </div>
+
+    <div>
+      <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">Keyword & metadata comparison</span></div>
+      <div class="tabs-wrap">
+        <button class="tab-btn active" onclick="showTab('kwGap',this)">Keyword gaps</button>
+        <button class="tab-btn" onclick="showTab('titleComp',this)">Title / Short desc</button>
+        <button class="tab-btn" onclick="showTab('metaScore',this)">Metadata scores</button>
+      </div>
+      <div id="tabKwGap"></div>
+      <div id="tabTitleComp" style="display:none"></div>
+      <div id="tabMetaScore" style="display:none"></div>
+    </div>
+
+    <div>
+      <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Key insights</span></div>
+      <div class="insights-grid fade-in" id="insightsList"></div>
+    </div>
+
+    <div>
+      <div class="sec-head"><span class="sec-num">04</span><span class="sec-title">Recommended experiments</span></div>
+      <div class="exp-grid" id="experimentList"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Built with Claude API · <a href="https://github.com" target="_blank">Deploy on Railway</a>
+</footer>
+
+<script>
+  const PILL_CLASSES = ['tag-you','tag-c1','tag-c2','tag-c3','tag-c4'];
+  const PILL_LABELS  = ['YOU','C1','C2','C3','C4'];
+  const SCORE_COLORS = ['#5DCAA5','#EF9F27','#f07a79','#6ea8e8','#b08bfa'];
+
+  function extractPkg(url) {
+    try {
+      const m = url.match(/id=([a-zA-Z0-9._]+)/);
+      return m ? m[1] : url.trim();
+    } catch(e) { return url.trim(); }
+  }
+
+  function setLoaderStep(idx) {
+    for(let i=0;i<5;i++) {
+      const el = document.getElementById('ls'+i);
+      if (i < idx) { el.className = 'done'; }
+      else if (i === idx) { el.className = 'active'; }
+      else { el.className = ''; }
+    }
+  }
+
+  async function startAnalysis() {
+    const url0 = document.getElementById('url0').value.trim();
+    if (!url0) {
+      showError('Please enter your app URL.');
+      return;
+    }
+
+    const urls = [0,1,2,3,4].map(i => document.getElementById('url'+i).value.trim()).filter(Boolean);
+    const packageIds = urls.map(extractPkg);
+
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('pageInput').style.display = 'none';
+    document.getElementById('pageLoading').style.display = 'block';
+
+    const steps = ['Fetching metadata...','Extracting keywords...','Gap analysis...','Scoring...','Generating experiments...'];
+    let si = 0;
+    setLoaderStep(0);
+    const stepInterval = setInterval(() => {
+      if (si < 4) setLoaderStep(++si);
+    }, 4500);
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls, packageIds })
+      });
+
+      clearInterval(stepInterval);
+      setLoaderStep(4);
+
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'Analysis failed');
+
+      setTimeout(() => renderResults(json.data), 300);
+
+    } catch(err) {
+      clearInterval(stepInterval);
+      document.getElementById('pageLoading').style.display = 'none';
+      document.getElementById('pageInput').style.display = 'block';
+      showError(err.message);
+    }
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = '⚠ ' + msg;
+    box.style.display = 'block';
+  }
+
+  function resetTool() {
+    document.getElementById('pageResults').style.display = 'none';
+    document.getElementById('pageLoading').style.display = 'none';
+    document.getElementById('pageInput').style.display = 'block';
+  }
+
+  function renderResults(d) {
+    document.getElementById('pageLoading').style.display = 'none';
+    document.getElementById('pageResults').style.display = 'block';
+    document.getElementById('pageResults').classList.add('fade-in');
+
+    renderAppGrid(d.apps || []);
+    renderKwGap(d.keywordGaps || [], d.apps || []);
+    renderTitleComp(d.titleComparison || [], d.apps || []);
+    renderMetaScores(d.apps || []);
+    renderInsights(d.insights || []);
+    renderExperiments(d.experiments || []);
+  }
+
+  function renderAppGrid(apps) {
+    const grid = document.getElementById('appGrid');
+    grid.innerHTML = apps.map((app, i) => {
+      const score = app.metadataScores?.overallASO || 0;
+      const fillColor = score >= 70 ? '#5DCAA5' : score >= 50 ? '#EF9F27' : '#E24B4A';
+      return `<div class="app-card${i===0?' yours':''} fade-in">
+        <div class="app-card-top">
+          <span class="url-tag ${PILL_CLASSES[i]}">${PILL_LABELS[i]}</span>
+          <span style="font-size:10px;color:var(--t3);font-family:var(--fm);">${app.category||''}</span>
+        </div>
+        <div class="app-name">${app.name||'Unknown'}</div>
+        <div class="app-pkg">${app.packageId||''}</div>
+        <div class="app-rating-big">${app.rating||'—'}<span style="font-size:16px;color:var(--t3);">★</span></div>
+        <div class="app-rating-sub">${app.ratingCount||''} ratings · ${app.installs||''}</div>
+        <div class="aso-score-row">
+          <div class="aso-score-label"><span>ASO Score</span><span style="color:${fillColor};font-weight:500;">${score}/100</span></div>
+          <div class="aso-bar"><div class="aso-fill" style="width:${score}%;background:${fillColor};"></div></div>
+        </div>
+        <div class="chip-row">
+          <span class="chip">${app.installs||'—'}</span>
+          <span class="chip">${app.lastUpdated||'—'}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderKwGap(gaps, apps) {
+    const compCount = apps.length - 1;
+    const compHeaders = apps.slice(1).map((_,i) => `<th>${PILL_LABELS[i+1]}</th>`).join('');
+    const rows = gaps.map(g => {
+      const volCls = g.searchVolume==='High'?'vol-high':g.searchVolume==='Medium'?'vol-med':'vol-low';
+      const youCell = `<td style="text-align:center;"><span class="${g.youHave?'tick-yes':'tick-no'}">${g.youHave?'✓':'✗'}</span></td>`;
+      const compCells = (g.competitors||[]).slice(0,compCount).map(h => `<td style="text-align:center;"><span class="${h?'tick-yes':'tick-no'}">${h?'✓':'—'}</span></td>`).join('');
+      return `<tr>
+        <td class="kw-name">${g.keyword||''}</td>
+        <td><span class="${volCls}">${g.searchVolume||''}</span></td>
+        ${youCell}${compCells}
+        <td class="opp-text">${g.opportunity||''}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('tabKwGap').innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Keyword</th><th>Volume</th><th>YOU</th>${compHeaders}<th>Opportunity</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--t3);margin-top:8px;font-family:var(--fm);">✓ = present in title / short desc / long desc &nbsp;·&nbsp; ✗ = missing</p>`;
+  }
+
+  function renderTitleComp(comps, apps) {
+    document.getElementById('tabTitleComp').innerHTML = comps.map((c, i) => {
+      const score = c.titleScore || 0;
+      const scoreColor = score >= 70 ? '#5DCAA5' : score >= 50 ? '#EF9F27' : '#E24B4A';
+      return `<div class="title-comp-card">
+        <div class="meta-row">
+          <span class="url-tag ${PILL_CLASSES[i]}">${c.appLabel||PILL_LABELS[i]}</span>
+          <span style="font-size:11px;color:${scoreColor};font-family:var(--fm);font-weight:500;">${score}/100</span>
+        </div>
+        <table class="meta-table">
+          <tr><td>Title</td><td>${c.title||'—'}</td></tr>
+          <tr><td>Short desc</td><td>${c.shortDesc||'—'}</td></tr>
+          <tr><td>Notes</td><td style="color:var(--t2);">${c.observations||'—'}</td></tr>
+        </table>
+      </div>`;
+    }).join('');
+  }
+
+  function renderMetaScores(apps) {
+    const dims = [
+      ['titleOptimization','Title'],
+      ['shortDescOptimization','Short desc'],
+      ['longDescOptimization','Long desc'],
+      ['visualOptimization','Visuals'],
+      ['overallASO','Overall ASO']
+    ];
+    document.getElementById('tabMetaScore').innerHTML = `
+      <div class="score-grid">
+        ${dims.map(([key,label]) => `
+          <div class="score-card">
+            <div class="score-card-label">${label}</div>
+            ${apps.map((app,i) => {
+              const val = app.metadataScores?.[key] || 0;
+              return `<div class="score-item">
+                <div class="score-item-top">
+                  <span style="color:${SCORE_COLORS[i]};font-family:var(--fm);font-size:11px;">${PILL_LABELS[i]}</span>
+                  <span style="font-family:var(--fm);font-size:11px;color:var(--t3);">${val}</span>
+                </div>
+                <div class="score-item-bar"><div class="score-item-fill" style="width:${val}%;background:${SCORE_COLORS[i]};opacity:0.75;"></div></div>
+              </div>`;
+            }).join('')}
+          </div>`).join('')}
+      </div>`;
+  }
+
+  function renderInsights(insights) {
+    const iconMap = { gap: '↓', win: '↑', opportunity: '→' };
+    document.getElementById('insightsList').innerHTML = insights.map(ins => `
+      <div class="insight-item ins-${ins.type||'opportunity'} fade-in">
+        <div class="ins-icon">${iconMap[ins.type]||'→'}</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.6;">${ins.text||''}</div>
+      </div>`).join('');
+  }
+
+  function renderExperiments(exps) {
+    document.getElementById('experimentList').innerHTML = exps.map(e => {
+      const pc = e.priority==='High'?'pri-high':e.priority==='Medium'?'pri-med':'pri-low';
+      const pb = e.priority==='High'?'pri-high-badge':e.priority==='Medium'?'pri-med-badge':'pri-low-badge';
+      return `<div class="exp-card ${pc} fade-in">
+        <div class="exp-top">
+          <span class="pri-badge ${pb}">${e.priority||'Med'} priority</span>
+          <span class="elem-badge">${e.element||''}</span>
+          <span class="lift-badge">↑ ${e.expectedLift||'?'}</span>
+          <span style="font-size:10px;color:var(--t3);font-family:var(--fm);margin-left:4px;">Effort: ${e.effort||'Med'}</span>
+        </div>
+        <div class="exp-title">${e.title||''}</div>
+        <div class="exp-desc">${e.description||''}</div>
+        <div class="exp-hyp">${e.hypothesis||''}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function showTab(tab, btn) {
+    ['kwGap','titleComp','metaScore'].forEach(t => {
+      const upper = t.charAt(0).toUpperCase() + t.slice(1);
+      document.getElementById('tab'+upper).style.display = t===tab?'block':'none';
+    });
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
